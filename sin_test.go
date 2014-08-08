@@ -37,8 +37,13 @@ func TestGetPublicKeyFromPrivateKey(t *testing.T) {
 func TestSINGeneration(t *testing.T) {
 	sininfo, _ := GenerateSIN()
 
-	if expected, _ := GetSINFromPublicKey(sininfo.PublicKey); expected != sininfo.SIN {
+	if expectedSIN, _ := GetSINFromPublicKey(sininfo.PublicKey); expectedSIN != sininfo.SIN {
 		t.Errorf("Generated SIN/Public key do not match")
+		return
+	}
+
+	if expectedPublicKey, _ := GetPublicKeyFromPrivateKey(sininfo.PrivateKey); expectedPublicKey != sininfo.PublicKey {
+		t.Errorf("Generated Public/Private key do not match")
 		return
 	}
 }
