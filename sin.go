@@ -2,33 +2,30 @@ package bitauth
 
 import (
 	"code.google.com/p/go.crypto/ripemd160"
+	secp256k1 "github.com/haltingstate/secp256k1-go"
 	"github.com/tonyhb/base58check"
 
-	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"math/big"
 	"strings"
 )
 
-type SIN []byte
-
-type SINInfo struct {
-	SIN        SIN
-	PublicKey  []byte
-	PrivateKey []byte
-}
-
-func GetSINFromPublicKey(key string) (sin SIN, err error) {
+// Get a public key's SIN as specified in
+// https://en.bitcoin.it/wiki/Identity_protocol_v1#Creating_a_SIN
+func GetSINFromPublicKeyString(key string) (sin SIN, err error) {
 	var decoded []byte
-	var ripe = ripemd160.New()
-
 	if decoded, err = hex.DecodeString(key); err != nil {
 		return
 	}
+	return GetSINFromPublicKey(decoded), nil
+}
+
+func GetSINFromPublicKey(key []byte) (sin SIN) {
+	var ripe = ripemd160.New()
 
 	// Get ripemd160(sha256(key))
-	ripe.Write(sum256AsByte(decoded))
+	ripe.Write(sum256AsByte(key))
 	hash160 := ripe.Sum(make([]byte, 0))
 
 	// Prefix 0x0F 0x02 to hash160; 0x02 refers to the SIN type (ephemeral)
@@ -46,18 +43,54 @@ func GetSINFromPublicKey(key string) (sin SIN, err error) {
 	i := new(big.Int)
 	i.SetString(step6, 16)
 
-	return SIN(string(base58.EncodeBig([]byte{}, i))), nil
+	return SIN(string(base58.EncodeBig([]byte{}, i)))
 }
 
-func GetPublicKeyFromPrivateKey(private []byte) ([]byte, error) {
-	return []byte{}, nil
+// Get a public key from any private key
+func GetPublicKeyFromPrivateKeyString(private string) (pubkey []byte, err error) {
+	var decoded []byte
+	if decoded, err = hex.DecodeString(private); err != nil {
+		return
+	}
+	return GetPublicKeyFromPrivateKey(decoded), nil
 }
 
-func GenerateSIN() (SINInfo, error) {
-	return SINInfo{}, nil
+func GetPublicKeyFromPrivateKey(private []byte) (pubkey []byte) {
+	return secp256k1.PubkeyFromSeckey(private)
+}
+
+// This uses an external library (github.com/haltingstate/secp256k1-go) which
+// delegates to Bitcoin's secp256k1 C library when generating SINs. Its
+// randommness isn't guaranteed. Use with caution.
+func GenerateSIN() SINInfo {
+	pub, prv := secp256k1.GenerateKeyPair()
+	sin := GetSINFromPublicKey(pub)
+
+	return SINInfo{
+		PrivateKey: prv,
+		PublicKey:  pub,
+		SIN:        sin,
+	}
 }
 
 func sum256AsByte(data []byte) []byte {
 	checksum := sha256.Sum256(data)
 	return checksum[:32]
+}
+
+type SIN []byte
+
+// Holds a hex encoded pub/prv keypair and a SIN byte slice
+type SINInfo struct {
+	SIN        SIN
+	PublicKey  []byte
+	PrivateKey []byte
+}
+
+func (t SINInfo) EncodedPublicKey() string {
+	return hex.EncodeToString(t.PublicKey)
+}
+
+func (t SINInfo) EncodedPrivateKey() string {
+	return hex.EncodeToString(t.PrivateKey)
 }

@@ -2,6 +2,7 @@ package bitauth
 
 import (
 	"bytes"
+	"encoding/hex"
 	"testing"
 )
 
@@ -13,7 +14,7 @@ func TestGetSINFromPublicKey(t *testing.T) {
 	}
 
 	for key, sin := range keys {
-		gen, _ := GetSINFromPublicKey(key)
+		gen, _ := GetSINFromPublicKeyString(key)
 		if !bytes.Equal(gen, sin) {
 			t.Errorf("Invalid sin. Expected %s, generated %s from key %s", sin, gen, key)
 			return
@@ -29,8 +30,10 @@ func TestGetPublicKeyFromPrivateKey(t *testing.T) {
 	}
 
 	for private, public := range keys {
-		generated, _ := GetPublicKeyFromPrivateKey([]byte(private))
-		if !bytes.Equal(generated, []byte(public)) {
+		generated, _ := GetPublicKeyFromPrivateKeyString(private)
+		encoded := hex.EncodeToString(generated)
+
+		if public != encoded {
 			t.Errorf("Invalid public key. Expected %s, generated %s from private key %s", public, generated, private)
 			return
 		}
@@ -38,15 +41,15 @@ func TestGetPublicKeyFromPrivateKey(t *testing.T) {
 }
 
 func TestSINGeneration(t *testing.T) {
-	sininfo, _ := GenerateSIN()
+	sininfo := GenerateSIN()
 
-	expectedSIN, _ := GetSINFromPublicKey(string(sininfo.PublicKey))
+	expectedSIN := GetSINFromPublicKey(sininfo.PublicKey)
 	if !bytes.Equal(expectedSIN, sininfo.SIN) {
 		t.Errorf("Generated SIN/Public key do not match")
 		return
 	}
 
-	expectedPublicKey, _ := GetPublicKeyFromPrivateKey(sininfo.PrivateKey)
+	expectedPublicKey := GetPublicKeyFromPrivateKey(sininfo.PrivateKey)
 	if !bytes.Equal(expectedPublicKey, sininfo.PublicKey) {
 		t.Errorf("Generated Public/Private key do not match")
 		return
