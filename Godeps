@@ -1,3 +1,4 @@
 code.google.com/p/go.crypto/ripemd160 41cd4647fccc
 github.com/tonyhb/base58check         b20aecee82dc
 github.com/conformal/btcwire          4deb922c9d23
+github.com/haltingstate/secp256k1-go  24c9fd561723
