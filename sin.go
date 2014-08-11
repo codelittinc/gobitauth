@@ -2,7 +2,7 @@ package bitauth
 
 import (
 	"code.google.com/p/go.crypto/ripemd160"
-	"github.com/tonyhb/base58"
+	"github.com/tonyhb/base58check"
 
 	"bytes"
 	"crypto/sha256"
@@ -32,7 +32,7 @@ func GetSINFromPublicKey(key string) (sin SIN, err error) {
 	hash160 := ripe.Sum(make([]byte, 0))
 
 	// Prefix 0x0F 0x02 to hash160; 0x02 refers to the SIN type (ephemeral)
-	prefixed := joinBytes([]byte{0x0F, 0x02}, hash160)
+	prefixed := append([]byte{0x0F, 0x02}, hash160...)
 
 	// Double-sha256 of the prefixed hash160
 	sha := sum256AsByte(sum256AsByte(prefixed))
@@ -49,19 +49,15 @@ func GetSINFromPublicKey(key string) (sin SIN, err error) {
 	return SIN(string(base58.EncodeBig([]byte{}, i))), nil
 }
 
-func GenerateSIN() (SINInfo, error) {
-	return SINInfo{}, nil
-}
-
 func GetPublicKeyFromPrivateKey(private []byte) ([]byte, error) {
 	return []byte{}, nil
+}
+
+func GenerateSIN() (SINInfo, error) {
+	return SINInfo{}, nil
 }
 
 func sum256AsByte(data []byte) []byte {
 	checksum := sha256.Sum256(data)
 	return checksum[:32]
-}
-
-func joinBytes(a, b []byte) []byte {
-	return bytes.Join([][]byte{a, b}, []byte{})
 }

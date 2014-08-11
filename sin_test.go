@@ -9,6 +9,7 @@ func TestGetSINFromPublicKey(t *testing.T) {
 	var keys = map[string]SIN{
 		"02F840A04114081690223B7069071A70D6DABB891763B638CC20C7EC3BD58E6C86": SIN("TfG4ScDgysrSpodWD4Re5UtXmcLbY5CiUHA"),
 		"023f5d74e874b2f7c784729fc93b7d38a3c28129d27321b2e4f7cde09d7609adff": SIN("TeyP7pTjXKMoZuHPvDpoUfopfjrHCosFB7W"),
+		"02df9eca865f13a977f9dcca0f503aba8efd580a153958e29bb7147ec8c0c1a3dc": SIN("Tf4X4AGGNe43fGWMzPzA5Aved3tgZXCoPRF"),
 	}
 
 	for key, sin := range keys {
