@@ -5,7 +5,6 @@ import (
 	secp256k1 "github.com/haltingstate/secp256k1-go"
 	"github.com/tonyhb/base58check"
 
-	"crypto/sha256"
 	"encoding/hex"
 	"math/big"
 	"strings"
@@ -56,7 +55,7 @@ func GetPublicKeyFromPrivateKeyString(private string) (pubkey []byte, err error)
 }
 
 func GetPublicKeyFromPrivateKey(private []byte) (pubkey []byte) {
-	return secp256k1.PubkeyFromSeckey(private)
+	return encodeHex(secp256k1.PubkeyFromSeckey(private))
 }
 
 // This uses an external library (github.com/haltingstate/secp256k1-go) which
@@ -73,14 +72,9 @@ func GenerateSIN() SINInfo {
 	}
 }
 
-func sum256AsByte(data []byte) []byte {
-	checksum := sha256.Sum256(data)
-	return checksum[:32]
-}
-
 type SIN []byte
 
-// Holds a hex encoded pub/prv keypair and a SIN byte slice
+// Holds a pub/prv keypair and a SIN byte slice
 type SINInfo struct {
 	SIN        SIN
 	PublicKey  []byte

@@ -26,7 +26,7 @@ func Sign(data, privKey []byte) (signed []byte) {
 
 	priv.PublicKey.X, priv.PublicKey.Y = c.ScalarBaseMult(D.Bytes())
 
-	digest := encodeHex(data)
+	digest := encodeHex(sum256AsByte(data))
 
 	// @TODO: Use RFC 6979 to generate deterministic nonces ensuring they will
 	//        never repeat.
@@ -60,7 +60,7 @@ func VerifySignature(data, signature, pubKeyByt []byte) bool {
 	// We need to unmarshal the signature and retrieve the R/S points to verify.
 	R, S := pointsFromDER(decodeHex(signature))
 
-	return ecdsa.Verify(&pub, encodeHex(data), R, S)
+	return ecdsa.Verify(&pub, encodeHex(sum256AsByte(data)), R, S)
 }
 
 // Convert an ECDSA signature (points R and S) to a byte array using ASN.1 DER encoding.
@@ -106,19 +106,4 @@ func pointsFromDER(der []byte) (R, S *big.Int) {
 	S.SetBytes(s)
 
 	return
-}
-
-// Helper utility to decode a hex-encoded public or private key
-func decodeHex(key []byte) []byte {
-	var decoded = make([]byte, hex.DecodedLen(len(key)))
-	hex.Decode(decoded, key)
-	return decoded
-}
-
-// Hex encodes a sha256 hash of given data
-func encodeHex(data []byte) []byte {
-	sum := sum256AsByte(data)
-	var byt = make([]byte, hex.EncodedLen(len(sum)))
-	hex.Encode(byt, sum)
-	return byt
 }

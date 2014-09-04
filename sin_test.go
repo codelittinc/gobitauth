@@ -2,7 +2,6 @@ package bitauth
 
 import (
 	"bytes"
-	"encoding/hex"
 	"testing"
 )
 
@@ -31,9 +30,8 @@ func TestGetPublicKeyFromPrivateKey(t *testing.T) {
 
 	for private, public := range keys {
 		generated, _ := GetPublicKeyFromPrivateKeyString(private)
-		encoded := hex.EncodeToString(generated)
 
-		if public != encoded {
+		if public != string(generated) {
 			t.Errorf("Invalid public key. Expected %s, generated %s from private key %s", public, generated, private)
 			return
 		}
@@ -50,7 +48,8 @@ func TestSINGeneration(t *testing.T) {
 	}
 
 	expectedPublicKey := GetPublicKeyFromPrivateKey(sininfo.PrivateKey)
-	if !bytes.Equal(expectedPublicKey, sininfo.PublicKey) {
+
+	if !bytes.Equal(decodeHex(expectedPublicKey), sininfo.PublicKey) {
 		t.Errorf("Generated Public/Private key do not match")
 		return
 	}
