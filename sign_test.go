@@ -1,8 +1,6 @@
 package bitauth
 
-import (
-	"testing"
-)
+import "testing"
 
 // @TODO: Test using external/deterministic signatures to verify signing works as expected
 func TestSign(t *testing.T) {
@@ -12,10 +10,14 @@ func TestSign(t *testing.T) {
 	data := [][]byte{
 		[]byte("test"),
 		[]byte("{foo:\"bar\"}"),
+		[]byte("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec mauris magna, maximus eget ipsum et, congue faucibus risus. Phasellus sit amet felis rutrum, semper enim in, maximus eros. Nunc sodales rutrum mi, vel scelerisque lectus aliquam vel."),
 	}
 
 	for i := range data {
 		signed := Sign(data[i], privKey)
+		if len(signed) == 0 {
+			t.Fatalf("Invalid zero-length of signed data")
+		}
 		if !VerifySignature(data[i], signed, pubKey) {
 			t.Errorf("Invalid signature generated")
 		}
