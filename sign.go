@@ -35,7 +35,7 @@ func Sign(data, privKey []byte) (signed []byte) {
 		panic(err.Error())
 	}
 
-	return pointsToDER(r, s)
+	return PointsToDER(r, s)
 }
 
 func VerifySignature(data, signature, pubKeyByt []byte) bool {
@@ -58,14 +58,14 @@ func VerifySignature(data, signature, pubKeyByt []byte) bool {
 
 	// A signature is a DES encoded string of two points (R and S) on the secp256k1 graph
 	// We need to unmarshal the signature and retrieve the R/S points to verify.
-	R, S := pointsFromDER(decodeHex(signature))
+	R, S := PointsFromDER(decodeHex(signature))
 
 	return ecdsa.Verify(&pub, encodeHex(sum256AsByte(data)), R, S)
 }
 
 // Convert an ECDSA signature (points R and S) to a byte array using ASN.1 DER encoding.
 // This is a port of Bitcore's Key.rs2DER method.
-func pointsToDER(r, s *big.Int) []byte {
+func PointsToDER(r, s *big.Int) []byte {
 	// Is either point negative? If so, we need to prepend 0x00 before each elem.
 	rb := r.Bytes()
 	sb := s.Bytes()
@@ -88,7 +88,8 @@ func pointsToDER(r, s *big.Int) []byte {
 // Sometimes demarshalling using Golang's DEC to struct unmarshalling fails; this extracts R and S from the bytes
 // manually to prevent crashing.
 // This should NOT be a hex encoded byte array
-func pointsFromDER(der []byte) (R, S *big.Int) {
+func PointsFromDER(der []byte) (R, S *big.Int) {
+	// @TODO: Detect DER hex encoding and fail (or decode) if it's hex encoded
 	R, S = &big.Int{}, &big.Int{}
 
 	data := asn1.RawValue{}
