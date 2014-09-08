@@ -73,9 +73,21 @@ func Sign(data, privKey []byte) (signed []byte) {
 // Convert an ECDSA signature (points R and S) to a byte array using ASN.1 DER encoding.
 // This is a port of Bitcore's Key.rs2DER method.
 func PointsToDER(r, s *big.Int) []byte {
-	// Is either point negative? If so, we need to prepend 0x00 before each elem.
-	rb := r.Bytes()
-	sb := s.Bytes()
+	// Ensure MSB doesn't break big endian encoding in DER sigs
+	prefixPoint := func(b []byte) []byte {
+		if len(b) == 0 {
+			b = []byte{0x00}
+		}
+		if b[0]&0x80 != 0 {
+			paddedBytes := make([]byte, len(b)+1)
+			copy(paddedBytes[1:], b)
+			b = paddedBytes
+		}
+		return b
+	}
+
+	rb := prefixPoint(r.Bytes())
+	sb := prefixPoint(s.Bytes())
 
 	// DER encoding:
 	// 0x30 + z + 0x02 + len(rb) + rb + 0x02 + len(sb) + sb
