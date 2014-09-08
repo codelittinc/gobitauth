@@ -20,7 +20,7 @@ func TestSign(t *testing.T) {
 	for i := range data {
 		signed := Sign(data[i], privKey)
 		if len(signed) == 0 {
-			t.Fatalf("Invalid zero-length of signed data")
+			t.Fatalf("Invalid zero-length of signed data for %s", data[i])
 		}
 		if !VerifySignature(data[i], signed, pubKey) {
 			t.Errorf("Invalid signature generated")

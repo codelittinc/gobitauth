@@ -27,11 +27,7 @@ func Sign(data, privKey []byte) (signed []byte) {
 
 	priv.PublicKey.X, priv.PublicKey.Y = c.ScalarBaseMult(D.Bytes())
 
-	digest := encodeHex(sum256AsByte(data))
-
-	if len(digest) != 64 {
-		return
-	}
+	digest := sum256AsByte(data)
 
 	// @TODO: Use RFC 6979 to generate deterministic nonces ensuring they will
 	//        never repeat.
@@ -43,32 +39,31 @@ func Sign(data, privKey []byte) (signed []byte) {
 	return PointsToDER(r, s)
 }
 
-// @TODO: Calculate signature verification based on bitauth/bitcore's signature verification code. Apparently,
-//        the build-in ecdsa signature algorith in golang doesn't work
-// func VerifySignature(data, signature, pubKeyByt []byte) bool {
-// 	// Hex decode public key
-// 	pubKeyByt = decodeHex(pubKeyByt)
-//
-// 	// Decompress the public key on the 265k1 graph, which returns the pubkey's
-// 	// X and Y points
-// 	c := kelliptic.S256()
-// 	x, y, err := c.DecompressPoint(pubKeyByt)
-// 	if err != nil {
-// 		return false
-// 	}
-//
-// 	pub := ecdsa.PublicKey{
-// 		Curve: c,
-// 		X:     x,
-// 		Y:     y,
-// 	}
-//
-// 	// A signature is a DES encoded string of two points (R and S) on the secp256k1 graph
-// 	// We need to unmarshal the signature and retrieve the R/S points to verify.
-// 	R, S := PointsFromDER(decodeHex(signature))
-//
-// 	return ecdsa.Verify(&pub, encodeHex(sum256AsByte(data)), R, S)
-// }
+// @TODO: Implement custom signature verification from Bitauth
+func VerifySignature(data, signature, pubKeyByt []byte) bool {
+	// Hex decode public key
+	pubKeyByt = decodeHex(pubKeyByt)
+
+	// Decompress the public key on the 265k1 graph, which returns the pubkey's
+	// X and Y points
+	c := kelliptic.S256()
+	x, y, err := c.DecompressPoint(pubKeyByt)
+	if err != nil {
+		return false
+	}
+
+	pub := ecdsa.PublicKey{
+		Curve: c,
+		X:     x,
+		Y:     y,
+	}
+
+	// A signature is a DES encoded string of two points (R and S) on the secp256k1 graph
+	// We need to unmarshal the signature and retrieve the R/S points to verify.
+	R, S := PointsFromDER(decodeHex(signature))
+
+	return ecdsa.Verify(&pub, encodeHex(sum256AsByte(data)), R, S)
+}
 
 // Convert an ECDSA signature (points R and S) to a byte array using ASN.1 DER encoding.
 // This is a port of Bitcore's Key.rs2DER method.
@@ -108,7 +103,6 @@ func PointsToDER(r, s *big.Int) []byte {
 // manually to prevent crashing.
 // This should NOT be a hex encoded byte array
 func PointsFromDER(der []byte) (R, S *big.Int) {
-	// @TODO: Detect DER hex encoding and fail (or decode) if it's hex encoded
 	R, S = &big.Int{}, &big.Int{}
 
 	data := asn1.RawValue{}
@@ -137,9 +131,8 @@ func sign(priv *ecdsa.PrivateKey, hash []byte) (r, s *big.Int, err error) {
 	return signDeterministically(priv, hash, random)
 }
 
-
-// Implement the algo from Bitauth to verify signatures. This is a different algorithm
-// to Golang's ecdsa.Sign method.
+// Create a signature determinstailly from a given random byte array
+// @TODO: Replace with Golang's built in ecdsa.Verify method using a new Reader for random
 func signDeterministically(priv *ecdsa.PrivateKey, hash, random []byte) (r, s *big.Int, err error) {
 	// Generate a new random byte array if necessary
 	if len(random) != 32 {
@@ -160,7 +153,9 @@ func signDeterministically(priv *ecdsa.PrivateKey, hash, random []byte) (r, s *b
 
 	// Calclulate S
 	k.ModInverse(k, secp256k1.N)
-	k.Mul(k, e.Add(e, d.Mul(priv.D, r)))
+	d.Mul(priv.D, r)
+	e.Add(e, d)
+	k.Mul(k, e)
 	s = k.Mod(k, secp256k1.N)
 
 	return
