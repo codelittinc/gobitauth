@@ -125,6 +125,7 @@ func sign(priv *ecdsa.PrivateKey, hash []byte) (r, s *big.Int, err error) {
 	return signDeterministically(priv, hash, random)
 }
 
+
 // Implement the algo from Bitauth to verify signatures. This is a different algorithm
 // to Golang's ecdsa.Sign method.
 func signDeterministically(priv *ecdsa.PrivateKey, hash, random []byte) (r, s *big.Int, err error) {
@@ -136,17 +137,19 @@ func signDeterministically(priv *ecdsa.PrivateKey, hash, random []byte) (r, s *b
 
 	e := new(big.Int).SetBytes(hash)
 	k := new(big.Int).SetBytes(random)
+	d := priv.D
 
 	secp256k1 := priv.Curve.Params()
 
+	// Calculate R
 	Gx, Gy := secp256k1.Gx, secp256k1.Gy
 	Qx, _ := priv.Curve.ScalarMult(Gx, Gy, k.Bytes())
 	r = Qx.Mod(Qx, secp256k1.N)
 
-	s = k.ModInverse(k, secp256k1.N).
-		Mod(k, secp256k1.N).
-		Mul(k, e.Add(e, priv.D.Mul(priv.D, r))).
-		Mod(k, secp256k1.N)
+	// Calclulate S
+	k.ModInverse(k, secp256k1.N)
+	k.Mul(k, e.Add(e, d.Mul(priv.D, r)))
+	s = k.Mod(k, secp256k1.N)
 
 	return
 }
