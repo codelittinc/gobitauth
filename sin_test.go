@@ -29,7 +29,10 @@ func TestGetPublicKeyFromPrivateKey(t *testing.T) {
 	}
 
 	for private, public := range keys {
-		generated, _ := GetPublicKeyFromPrivateKeyString(private)
+		generated, err := GetPublicKeyFromPrivateKeyString(private)
+		if err != nil {
+			t.Errorf("Expecting a valid public key from a private key string")
+		}
 
 		if public != string(generated) {
 			t.Errorf("Invalid public key. Expected %s, generated %s from private key %s", public, generated, private)
@@ -39,7 +42,10 @@ func TestGetPublicKeyFromPrivateKey(t *testing.T) {
 }
 
 func TestSINGeneration(t *testing.T) {
-	sininfo := GenerateSIN()
+	sininfo, err := GenerateSIN()
+	if err != nil {
+		t.Errorf("Expected SINInfo to be valid")
+	}
 
 	expectedSIN := GetSINFromPublicKey(sininfo.PublicKey)
 	if !bytes.Equal(expectedSIN, sininfo.SIN) {

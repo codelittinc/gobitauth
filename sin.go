@@ -2,7 +2,7 @@ package bitauth
 
 import (
 	"code.google.com/p/go.crypto/ripemd160"
-	secp256k1 "github.com/haltingstate/secp256k1-go"
+	"github.com/conformal/btcec"
 	"github.com/tonyhb/base58check"
 
 	"encoding/hex"
@@ -55,21 +55,30 @@ func GetPublicKeyFromPrivateKeyString(private string) (pubkey []byte, err error)
 }
 
 func GetPublicKeyFromPrivateKey(private []byte) (pubkey []byte) {
-	return encodeHex(secp256k1.PubkeyFromSeckey(private))
+	_, pubKey := btcec.PrivKeyFromBytes(btcec.S256(), []byte(private))
+
+	return encodeHex(pubKey.SerializeCompressed())
 }
 
 // This uses an external library (github.com/haltingstate/secp256k1-go) which
 // delegates to Bitcoin's secp256k1 C library when generating SINs. Its
 // randommness isn't guaranteed. Use with caution.
-func GenerateSIN() SINInfo {
-	pub, prv := secp256k1.GenerateKeyPair()
-	sin := GetSINFromPublicKey(pub)
-
-	return SINInfo{
-		PrivateKey: prv,
-		PublicKey:  pub,
-		SIN:        sin,
+func GenerateSIN() (*SINInfo, error) {
+	// Generate key public/private key pair
+	prvKey, err := btcec.NewPrivateKey(btcec.S256())
+	if err != nil {
+		return nil, err
 	}
+
+	pubKey := prvKey.PubKey().SerializeCompressed()
+
+	sin := GetSINFromPublicKey(pubKey)
+
+	return &SINInfo{
+		PrivateKey: prvKey.Serialize(),
+		PublicKey:  pubKey,
+		SIN:        sin,
+	}, nil
 }
 
 type SIN []byte
