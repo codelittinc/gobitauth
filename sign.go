@@ -7,8 +7,8 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/conformal/btcec"
-	"github.com/conformal/btcwire"
+	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/wire"
 )
 
 // Returns a hex encoded signature for the given data and private key.
@@ -20,7 +20,7 @@ func Sign(data, private string) (string, error) {
 	}
 	privKey, _ := btcec.PrivKeyFromBytes(btcec.S256(), pkBytes)
 
-	dataHash := btcwire.DoubleSha256([]byte(data))
+	dataHash := wire.DoubleSha256([]byte(data))
 	signature, err := privKey.Sign(dataHash)
 	if err != nil {
 		return "", err
@@ -51,7 +51,7 @@ func VerifySignature(data, sign, public string) (bool, error) {
 		return false, err
 	}
 
-	dataHash := btcwire.DoubleSha256([]byte(data))
+	dataHash := wire.DoubleSha256([]byte(data))
 
 	return signature.Verify(dataHash, pubKey), nil
 }

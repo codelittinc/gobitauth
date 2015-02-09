@@ -2,7 +2,7 @@ package bitauth
 
 import (
 	"code.google.com/p/go.crypto/ripemd160"
-	"github.com/conformal/btcec"
+	"github.com/btcsuite/btcd/btcec"
 	"github.com/tonyhb/base58check"
 
 	"encoding/hex"
